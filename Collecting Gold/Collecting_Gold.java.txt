@@ -1,0 +1,191 @@
+// Don't place your source in a package
+import java.util.*;
+import java.lang.*;
+import java.io.*;
+
+// Please name your class Main
+class Main {
+    public static long[] primeList = new long[15];
+    public static ArrayList<Node> cities = new ArrayList<>();
+    //public static boolean[] shortestPath = new boolean[g.numOfVerticies];
+    
+    public static void main (String[] args) throws java.lang.Exception {
+	    Scanner in = new Scanner(System.in);
+	    int n = in.nextInt();
+	    int e = in.nextInt();
+	    int[][] edges = new int[n][n];
+	    long[] cityValues = new long[n];
+	    Graph g = new Graph(n);
+	    //jheh
+	    long min;
+	    long max;
+	    
+	    for(int i = 0; i<n; i++){
+	        cityValues[i] = in.nextLong();
+	        cities.add(new Node(cityValues[i]));
+	        cities.get(i).goldCount = sieveOfEratosthenes(cities.get(i).value);
+	    }
+	    
+	    Arrays.sort(cityValues);
+		min = cityValues[0];
+		max = cityValues[n-1];
+
+	    for(int i = 0; i<e; i++){
+	        long e1 = in.nextLong();
+	        long e2 = in.nextLong();
+	        int distance = in.nextInt();
+	        Node n1 = getNode(cities, e1);
+	        Node n2 = getNode(cities, e2);
+	        
+	        edges[n1.id][n2.id] = distance;
+	        edges[n2.id][n1.id] = distance;
+	        
+	        g.addEdge(getNode(cities, e1), getNode(cities, e2));
+	        
+	    }
+	    dijkstra(g, getNode(cities, min), getNode(cities, max), edges);
+	    int gold = 0;
+	    Node current = getNode(cities, max);
+	    while(true){
+	        gold += current.goldCount;
+	        if(current.parent == null)
+	            break;
+	            
+	        current = current.parent;
+	    }
+	    System.out.println(gold);
+    }
+    
+    public static void dijkstra(Graph g, Node source, Node end, int[][] edges){
+        PriorityQueue<Node> pq = new PriorityQueue(g.numOfVerticies, new Node());
+        int[] dist = new int[g.numOfVerticies];
+        ArrayList<Node> visited = new ArrayList();
+        
+        for(int i = 0; i < g.numOfVerticies; i++){
+            dist[i] = Integer.MAX_VALUE;
+        }
+        
+        pq.add(source);
+        dist[source.id] = 0;
+        
+        while(!pq.isEmpty()){
+            Node current = pq.poll();
+            //visited.add(current);
+            
+            
+            LinkedList<Node> list = g.getAdjList(current);
+            
+            for(Node n : list){
+                int edgeDist = -1;
+                int newEdgeDist = -1;
+                edgeDist = edges[current.id][n.id];
+                newEdgeDist = dist[current.id] + edgeDist;
+                if(newEdgeDist < dist[n.id]){
+                    dist[n.id] = newEdgeDist;
+                    n.parent = current;
+                    //n.distance = newEdgeDist;
+                    pq.remove(n);
+                    pq.add(n);
+                }
+            }
+        }
+    }
+    
+    public static Node getNode(ArrayList<Node> nodes, long nodeNum) {
+        for(Node n : nodes) {
+            if(n.value == nodeNum) {
+                return n;
+            }
+        }
+        return null;
+    }
+
+	
+	public static int sieveOfEratosthenes(long val) 
+    { 
+        int n = 50;
+        boolean prime[] = new boolean[n+1]; 
+        for(int i=0;i<n;i++) 
+            prime[i] = true; 
+          
+        for(int p = 2; p*p <=n; p++) 
+        { 
+            // If prime[p] is not changed, then it is a prime 
+            if(prime[p] == true) 
+            { 
+                // Update all multiples of p 
+                for(int i = p*2; i <= n; i += p) 
+                    prime[i] = false; 
+            } 
+        } 
+        int index = 2;
+        long max = 1;
+        int count = -1;
+        while(max <= val && index < 50) {
+            if(prime[index] == true) { 
+                max *= index;
+                count++;
+            }
+            index++;
+        }
+        if (val > max) count++;
+        return count;
+    } 
+}
+
+class Graph {
+    
+    public int numOfVerticies;
+    public LinkedList<Node> adj[];
+    
+    public Graph(int numOfVerticies){
+        this.numOfVerticies = numOfVerticies;
+        adj = new LinkedList[numOfVerticies];
+        for(int i = 0; i<numOfVerticies; i++){
+            adj[i] = new LinkedList();
+        }
+    }
+    
+    public LinkedList<Node> getAdjList(Node node) {
+        return adj[node.id];
+    }
+    
+    public void addEdge(Node n1, Node n2){
+        adj[n1.id].add(n2);
+        adj[n2.id].add(n1);
+        //edges[n1.id][n2.id] = distance;
+        //edges[n2.id][n1.id] = distance;
+    }
+}
+
+class Node implements Comparator<Node>{
+    int id;
+    long distance;
+    long value;
+    static int count = 0;
+    Node parent = null;
+    int goldCount;
+    
+    public Node(long value){
+        id = count;
+        count++;
+        this.value = value;
+        goldCount = 0;
+    }
+    public Node(){
+        
+    }
+    @Override
+    public int compare(Node node1, Node node2){
+        if(node1.value < node2.value){
+            return -1;
+        }
+        if(node1.value > node2.value){
+            return 1;
+        }
+        return 0;
+    }
+    public String toString(){
+        return "Node: " + value;
+    }
+}
